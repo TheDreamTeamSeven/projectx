@@ -29,9 +29,12 @@ def send_completion_request( prompt, tables_with_columns = {}):
     print('Sending a test completion job')
 
     print(prompt)
-    print(tables_with_columns)
+    print('TABLES')
+    print(dict_to_string(tables_with_columns))
 
-    prompt = context_str + prompt
+    context_structure = 'Please associate each query you generate with provided database structure ' + dict_to_string(tables_with_columns) +'\n RETURN ONLY PROPER SQL SYNTAX AND NO ADDITIONAL WORDS'
+
+    prompt = context_str + prompt + context_structure 
 
     message = HumanMessage(
         model='testChatIntegration',
@@ -51,24 +54,14 @@ def send_completion_request( prompt, tables_with_columns = {}):
     }
     # return full_response
 
+def dict_to_string(data):
+    output = []
+    for table, columns in data.items():
+        columns_str = ", ".join(columns)  # Join all column names with a comma and a space
+        table_info = f"Table: {table}\nColumns: {columns_str}\n"
+        output.append(table_info)
+    return "\n".join(output)  # Join all table information with a newline
 
-def sql_to_json(sql_query):
-    # Assuming SQL query is "SELECT * FROM table WHERE condition"
-    # Simplistic parser for demonstration purposes
-    parts = sql_query.split()
-    json_query = {
-        "action": parts[0],
-        "columns": parts[1],
-        "table": parts[3],
-        "condition": " ".join(parts[5:])
-    }
-    print(json_query)
-    return json_query
-
-def get_sql_query_in_json(nl_query):
-    sql_query = azure_openai_request(nl_query)
-    json_query = sql_to_json(sql_query)
-    return json_query
 
 # Example usage
 nl_query = "Show me all records from employees where age is greater than 30 AND city is equal to Warsaw"

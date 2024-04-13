@@ -25,17 +25,15 @@ function switchTab(tabId) {
     chatBox.innerHTML = 'Chat content for ' + tabs[tabId]; // Use the tabId to fetch the correct tab name
 }
 
+
 // Send a message
 function sendMessage() {
     var input = document.getElementById('chat-input');
     if (input.value.trim() === '') return; // Prevent empty messages
-    socket.emit('message', { tabId: currentTabId, data: input.value });
-    input.value = '';
-}
 
-// Process natural language query
-function processNLQuery() {
-    const nlQuery = document.getElementById('chat-input').value; // Reusing chat-input for NL query
+    socket.emit('message', { tabId: currentTabId, data: input.value });
+
+    const nlQuery = input.value;
     fetch('/process-query', {
         method: 'POST',
         headers: {
@@ -46,10 +44,23 @@ function processNLQuery() {
     .then(response => response.json())
     .then(data => {
         console.log('Query processed:', data);
-        document.getElementById('data-display').textContent = JSON.stringify(data, null, 2);
+        if (data.error) {
+            console.error('Error:', data.error);
+            document.getElementById('data-display').textContent = 'Error: ' + data.error;
+        } else {
+            // Populate the SQL query input box with the translated SQL query
+            document.getElementById('sql-query').value = data.content || '';
+            // Display additional data (if any) in the data-display area
+            document.getElementById('data-display').textContent = JSON.stringify(data.query_data, null, 2);
+        }
+        input.value = ''; // Clear the NL input after processing
     })
-    .catch(error => console.error('Error processing NL query:', error));
+    .catch(error => {
+        console.error('Error processing NL query:', error);
+        document.getElementById('data-display').textContent = 'Processing error: ' + error.message;
+    });
 }
+
 
 // Run SQL query
 function sendQuery() {
