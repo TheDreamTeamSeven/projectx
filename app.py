@@ -16,8 +16,10 @@ username = 'hacksqlusr012993'
 password = 'hacksqlusrP@ssw00rd'
 driver = '{ODBC Driver 18 for SQL Server}'
 
+fetch_tables_schema_sql = " SELECT TABLE_SCHEMA, TABLE_NAME FROM INFORMATION_SCHEMA.TABLES; "
 fetch_tables_sql = "SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE table_type = 'BASE TABLE';"
-fetch_columns_table_sql = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '%s' ORDER BY ORDINAL_POSITION;"
+# fetch_columns_table_sql = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '%s' ORDER BY ORDINAL_POSITION;"
+fetch_columns_table_sql = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? ORDER BY ORDINAL_POSITION;"
 
 connection_string = f'DRIVER={driver};SERVER={server};DATABASE={database};UID={username};PWD={password};Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;'
 
@@ -65,6 +67,8 @@ def execute_query():
 
 @app.route('/process-query', methods=['POST'])
 def process_query():
+    global tables_with_columns
+
     data = request.get_json()
     nl_query = data.get('query')
     if not nl_query:
@@ -73,7 +77,13 @@ def process_query():
     try:
         # Assuming send_completion_request is a function from chat_integration.py that handles the processing
         # Pass the global table structure along with the query
+        print('TABLES')
+        print(tables_with_columns)
         result = send_completion_request(nl_query, tables_with_columns)
+        print('RESULT ')
+        print(result['content'])
+        query_data = fetch_data_from_db(result['content'])
+        result['query_data'] = query_data
         print(result)
         return jsonify(result)
     except Exception as e:
@@ -90,21 +100,36 @@ def handle_message(data):
     else:
         emit('response', {'tabId': data['tabId'], 'data': 'User: ' + data['data']})
 
+def fetch_tables_schema():
+    ...
+
 def fetch_tables_and_initialize():
     global tables_with_columns
-    cursor.execute(fetch_tables_sql)
-    tables = [row[0] for row in cursor.fetchall()]
-    tables_with_columns = {table: [] for table in tables}
-    print(tables)
+    # Ensure the SQL query is set to fetch both the TABLE_NAME and TABLE_SCHEMA
+    cursor.execute(fetch_tables_schema_sql)
+    # Fetch all rows and create dictionary keys as "schema.table"
+    schema_table_pairs = cursor.fetchall()
+    tables_with_columns = {f"{row.TABLE_SCHEMA}.{row.TABLE_NAME}": [] for row in schema_table_pairs}
+    print("Initialized tables with schema:", tables_with_columns)
+
+# def populate_columns_for_tables():
+#     global tables_with_columns
+#     for table in tables_with_columns.keys():
+#         query = fetch_columns_table_sql % table
+#         cursor.execute(query)
+#         columns = [row[0] for row in cursor.fetchall()]
+#         tables_with_columns[table] = columns
+#     print(tables_with_columns)
 
 def populate_columns_for_tables():
     global tables_with_columns
-    for table in tables_with_columns.keys():
-        query = fetch_columns_table_sql % table
-        cursor.execute(query)
+    for full_table_name in tables_with_columns.keys():
+        schema, table = full_table_name.split('.')  # Split the full name into schema and table
+        # Execute the query with parameters for schema and table
+        cursor.execute(fetch_columns_table_sql, (schema, table))
         columns = [row[0] for row in cursor.fetchall()]
-        tables_with_columns[table] = columns
-    print(tables_with_columns)
+        tables_with_columns[full_table_name] = columns
+    print("Populated tables with columns:", tables_with_columns)
 
 def fetch_data_from_db(query_str='SELECT TOP 5 * FROM SalesLT.Customer;'):
     cursor.execute(query_str)
