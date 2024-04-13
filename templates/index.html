@@ -12,65 +12,21 @@
     <input type="text" id="new-tab-name" placeholder="New Tab Name">
     <div id="chat-container">
         <div id="chat-box"></div>
-
-        <!-- DATABASE INIT -->
-        <script>
-            function initDatabase() {
-                console.log('TEST');
-
-                fetch('/init-db-structure')
-                    .then(response => response.json())
-                    .then(data => {
-                        console.log('Database initialized:', data);
-                        // You can also update the UI to show that the database has been initialized
-                    })
-                    .catch(error => console.error('Error initializing database:', error));
-            }
-            document.addEventListener('DOMContentLoaded', function() {
-        initDatabase();  // Automatically initialize the database on page load
-    });
-        </script>
-        <!-- INPUT -->
         <div id="chat-input-box">
             <input type="text" id="chat-input" class="full-width-input">
             <button onclick="sendMessage()">Send</button>
+            <button onclick="processNLQuery()">Send NL Query</button>
         </div>
-
-        <!-- QUERY -->
         <div id="sql-query-box">
             <input type="text" id="sql-query" class="full-width-input" placeholder="Enter SQL query">
-            <button onclick="sendQuery()">Run Query</button>
+            <button onclick="sendQuery()">Run SQL Query</button>
         </div>
-
         <div id="data-display">
             <!-- Data from the database will be displayed here -->
         </div>
-        <script>
-            function sendQuery() {
-                const query = document.getElementById('sql-query').value;
-                fetch('/execute-query', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ query: query })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    const display = document.getElementById('data-display');
-                    display.innerHTML = ''; // Clear previous results
-                    data.forEach(row => {
-                        const content = document.createElement('p');
-                        content.textContent = JSON.stringify(row);
-                        display.appendChild(content);
-                    });
-                })
-                .catch(error => console.error('Error running query:', error));
-            }
-        </script>
     </div>
-
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
+
 </html>

@@ -1,5 +1,8 @@
+from chat_integration import send_completion_request
 from flask import Flask, jsonify, render_template, request
 from flask_socketio import SocketIO, send, emit
+
+
 import pyodbc
 
 app = Flask(__name__)
@@ -68,10 +71,10 @@ def process_query():
         return jsonify({'error': 'No query provided'}), 400
 
     try:
-        # Assuming get_sql_query_in_json is a function from chat_integration.py that handles the processing
-        from chat_integration import get_sql_query_in_json
+        # Assuming send_completion_request is a function from chat_integration.py that handles the processing
         # Pass the global table structure along with the query
-        result = get_sql_query_in_json(nl_query, tables_with_columns)
+        result = send_completion_request(nl_query, tables_with_columns)
+        print(result)
         return jsonify(result)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
