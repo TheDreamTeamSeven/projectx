@@ -19,7 +19,7 @@ client = AzureChatOpenAI(
 
 context_str = 'You are a SQL query developer. Please create a proper SQL query for the description as given below:\n'
 
-def send_completion_request( prompt):
+def send_completion_request( prompt, tables_with_columns = {}):
     """
     Sends a completion job to the OpenAI API and prints the response.
 
@@ -29,6 +29,7 @@ def send_completion_request( prompt):
     print('Sending a test completion job')
 
     print(prompt)
+    print(tables_with_columns)
 
     prompt = context_str + prompt
 
@@ -44,7 +45,11 @@ def send_completion_request( prompt):
         f"Total Cost (USD): ${format(cb.total_cost, '.6f')}"
     )  
 
-    return full_response
+    return {
+        "content": full_response.content,  # or whatever the attribute for the response text is
+        "total_cost": full_response.total_cost
+    }
+    # return full_response
 
 
 def sql_to_json(sql_query):
