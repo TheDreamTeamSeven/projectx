@@ -12,12 +12,18 @@
     <input type="text" id="new-tab-name" placeholder="New Tab Name">
     <div id="chat-container">
         <div id="chat-box"></div>
-        <input type="text" id="chat-input">
-        <button onclick="sendMessage()">Send</button>
-        <div>
-            <input type="text" id="sql-query" placeholder="Enter SQL query">
+        <!-- INPUT -->
+        <div id="chat-input-box">
+            <input type="text" id="chat-input" class="full-width-input">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+
+        <!-- QUERY -->
+        <div id="sql-query-box">
+            <input type="text" id="sql-query" class="full-width-input" placeholder="Enter SQL query">
             <button onclick="sendQuery()">Run Query</button>
         </div>
+
         <div id="data-display">
             <!-- Data from the database will be displayed here -->
         </div>
