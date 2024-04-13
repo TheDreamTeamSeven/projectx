@@ -7,7 +7,18 @@
 }
 
 .chat-container {
+    width: 100%;
     border: 1px solid #ccc;
     padding: 10px;
     margin-top: 5px;
+}
+
+.full-width-input {
+    width: calc(100% - 22px); /* Adjusting for padding and border */
+    padding: 10px;
+    box-sizing: border-box; /* Includes padding and border in the width */
+}
+
+#chat-input-box, #sql-query-box {
+    margin-bottom: 10px;
 }
