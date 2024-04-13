@@ -18,9 +18,9 @@ server_name = credential.get_secret_value('sql-server-name-gr-7')
 server_port = credential.get_secret_value('sql-server-port')
 server = f'{server_name},{server_port}'
 
-database_name_hackathon = credential.get_secret_value('sql-database-name-content')
-username = credential.get_secret_value('sql-database-user-content')
-password = credential.get_secret_value('sql-database-password-content')
+database_name_hackathon = credential.get_secret_value('sql-database-name-hackathon')
+username = credential.get_secret_value('sql-database-user-name-hackathon')
+password = credential.get_secret_value('sql-database-user-password-hackathon')
 
 driver = '{ODBC Driver 18 for SQL Server}'
 
