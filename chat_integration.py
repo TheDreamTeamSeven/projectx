@@ -6,9 +6,13 @@ from langchain_community.callbacks import get_openai_callback
 from langchain_core.messages import HumanMessage
 from langchain_openai import AzureChatOpenAI
 
+from azure_connection.utils import AzureCredential
+
+credential = AzureCredential()
+
 # Constants
-API_KEY = "73e54f660d6d4c2aa5b9def3c32cac0c"  # Your API key
-AZURE_ENDPOINT = "https://chatintegration.openai.azure.com/"  # Azure endpoint
+API_KEY = credential.get_secret_value('openai-api-key')
+AZURE_ENDPOINT = credential.get_secret_value('openai-endpoint')
 max_tokens = 10
 client = AzureChatOpenAI(
     azure_endpoint=AZURE_ENDPOINT,

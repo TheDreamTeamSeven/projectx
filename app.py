@@ -2,6 +2,7 @@ from chat_integration import send_completion_request
 from flask import Flask, jsonify, render_template, request
 from flask_socketio import SocketIO, send, emit
 
+from azure_connection.utils import AzureCredential
 
 import pyodbc
 
@@ -9,11 +10,18 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key'
 socketio = SocketIO(app)
 
+credential = AzureCredential()
+
 # Database connection setup
-server = 'hackaton-gr7-sqlserverm7d1m.database.windows.net,1433'
-database = 'hackaton-gr7-sqldb'
-username = 'hacksqlusr012993'
-password = 'hacksqlusrP@ssw00rd'
+
+server_name = credential.get_secret_value('sql-server-name-gr-7')
+server_port = credential.get_secret_value('sql-server-port')
+server = f'{server_name},{server_port}'
+
+database_name_hackathon = credential.get_secret_value('sql-database-name-content')
+username = credential.get_secret_value('sql-database-user-content')
+password = credential.get_secret_value('sql-database-password-content')
+
 driver = '{ODBC Driver 18 for SQL Server}'
 
 fetch_tables_schema_sql = " SELECT TABLE_SCHEMA, TABLE_NAME FROM INFORMATION_SCHEMA.TABLES; "
@@ -21,7 +29,7 @@ fetch_tables_sql = "SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE table
 # fetch_columns_table_sql = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '%s' ORDER BY ORDINAL_POSITION;"
 fetch_columns_table_sql = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? ORDER BY ORDINAL_POSITION;"
 
-connection_string = f'DRIVER={driver};SERVER={server};DATABASE={database};UID={username};PWD={password};Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;'
+connection_string = f'DRIVER={driver};SERVER={server};DATABASE={database_name_hackathon};UID={username};PWD={password};Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;'
 
 tables_with_columns = {}
 
