@@ -32,7 +32,7 @@ def send_completion_request( prompt, tables_with_columns = {}):
     print('TABLES')
     print(dict_to_string(tables_with_columns))
 
-    context_structure = 'Please associate each query you generate with provided database structure ' + dict_to_string(tables_with_columns) +'\n RETURN ONLY PROPER SQL SYNTAX AND NO ADDITIONAL WORDS'
+    context_structure = 'Please associate each query you generate with provided database structure ' + dict_to_string(tables_with_columns) +'\n ALL DATES ARE IN ISO8601 FORMAT \nRETURN ONLY!!! PROPER SQL QUERY SYNTAX AND NO MORE ADDITIONAL WORDS'
 
     prompt = context_str + prompt + context_structure 
 

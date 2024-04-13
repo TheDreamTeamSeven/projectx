@@ -51,7 +51,8 @@ function sendMessage() {
             // Populate the SQL query input box with the translated SQL query
             document.getElementById('sql-query').value = data.content || '';
             // Display additional data (if any) in the data-display area
-            document.getElementById('data-display').textContent = JSON.stringify(data.query_data, null, 2);
+            // document.getElementById('data-display').textContent = JSON.stringify(data.query_data, null, 2);
+            displayDataAsTable(data.query_data);
         }
         input.value = ''; // Clear the NL input after processing
     })
@@ -74,16 +75,64 @@ function sendQuery() {
     })
     .then(response => response.json())
     .then(data => {
-        const display = document.getElementById('data-display');
-        display.innerHTML = ''; // Clear previous results
-        data.forEach(row => {
-            const content = document.createElement('p');
-            content.textContent = JSON.stringify(row);
-            display.appendChild(content);
-        });
+        // const display = document.getElementById('data-display');
+        // display.innerHTML = ''; // Clear previous results
+        // data.forEach(row => {
+        //     const content = document.createElement('p');
+        //     content.textContent = JSON.stringify(row);
+        //     display.appendChild(content);
+        // });
+        displayDataAsTable(data);  // Assuming 'data' is the JSON array received from the server
+
     })
     .catch(error => console.error('Error running query:', error));
 }
+
+// Function to display JSON data as a table in the data-display element
+function displayDataAsTable(jsonData) {
+    const displayArea = document.getElementById('data-display');
+    displayArea.innerHTML = '';  // Clear previous contents
+
+    if (jsonData.length === 0) {
+        displayArea.innerHTML = '<p>No data to display.</p>';
+        return;
+    }
+
+    // Create a table element
+    const table = document.createElement('table');
+    table.style.width = '100%';
+    table.setAttribute('border', '1');
+    table.setAttribute('cellspacing', '0');
+    table.setAttribute('cellpadding', '5');
+
+    // Create the header row
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+    Object.keys(jsonData[0]).forEach(key => {
+        const headerCell = document.createElement('th');
+        headerCell.textContent = key;
+        headerRow.appendChild(headerCell);
+    });
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+
+    // Create the body of the table
+    const tbody = document.createElement('tbody');
+    jsonData.forEach(item => {
+        const row = document.createElement('tr');
+        Object.values(item).forEach(value => {
+            const cell = document.createElement('td');
+            cell.textContent = value;
+            row.appendChild(cell);
+        });
+        tbody.appendChild(row);
+    });
+    table.appendChild(tbody);
+
+    // Append the table to the display area
+    displayArea.appendChild(table);
+}
+
 
 // Initialize database structure
 function initDatabase() {

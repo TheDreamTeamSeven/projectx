@@ -80,11 +80,12 @@ def process_query():
         print('TABLES')
         print(tables_with_columns)
         result = send_completion_request(nl_query, tables_with_columns)
-        print('RESULT ')
+        print('SQL QUERY ')
+        result['content'] = result['content'].replace('\n', ' ')
         print(result['content'])
         query_data = fetch_data_from_db(result['content'])
         result['query_data'] = query_data
-        print(result)
+        # print(result)
         return jsonify(result)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
