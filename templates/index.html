@@ -12,6 +12,24 @@
     <input type="text" id="new-tab-name" placeholder="New Tab Name">
     <div id="chat-container">
         <div id="chat-box"></div>
+
+        <!-- DATABASE INIT -->
+        <script>
+            function initDatabase() {
+                console.log('TEST');
+
+                fetch('/init-db-structure')
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Database initialized:', data);
+                        // You can also update the UI to show that the database has been initialized
+                    })
+                    .catch(error => console.error('Error initializing database:', error));
+            }
+            document.addEventListener('DOMContentLoaded', function() {
+        initDatabase();  // Automatically initialize the database on page load
+    });
+        </script>
         <!-- INPUT -->
         <div id="chat-input-box">
             <input type="text" id="chat-input" class="full-width-input">

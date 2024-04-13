@@ -2,6 +2,7 @@ import requests
 import json
 from openai import AzureOpenAI
 
+from langchain_community.callbacks import get_openai_callback
 from langchain_core.messages import HumanMessage
 from langchain_openai import AzureChatOpenAI
 
@@ -31,14 +32,18 @@ def send_completion_request( prompt):
 
     prompt = context_str + prompt
 
-    # response = client.completions.create(model='testChatIntegration',  prompt=prompt, temperature=0.1, top_p=1)
-    # full_response = prompt + response.choices[0].text
-    # print(full_response)
     message = HumanMessage(
         model='testChatIntegration',
         content=prompt
     )
-    full_response = client([message])
+
+    with get_openai_callback() as cb:
+        full_response = client([message])
+        full_response.total_cost = format(cb.total_cost, '.6f')
+        print(
+        f"Total Cost (USD): ${format(cb.total_cost, '.6f')}"
+    )  
+
     return full_response
 
 
@@ -61,7 +66,7 @@ def get_sql_query_in_json(nl_query):
     return json_query
 
 # Example usage
-nl_query = "Show me all records from employees where age is greater than 30"
+nl_query = "Show me all records from employees where age is greater than 30 AND city is equal to Warsaw"
 test_query='What is the color of the sky? Please tell me'
 
 result = send_completion_request(nl_query)
