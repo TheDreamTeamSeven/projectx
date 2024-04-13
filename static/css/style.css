@@ -1,0 +1,13 @@
+/* style.css */
+.tab {
+    cursor: pointer;
+    padding: 10px;
+    border: 1px solid #ccc;
+    display: inline-block;
+}
+
+.chat-container {
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-top: 5px;
+}

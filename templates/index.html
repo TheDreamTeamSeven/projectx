@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Tabs</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div id="tabs"></div>
+    <button onclick="addTab()">Add Tab</button>
+    <input type="text" id="new-tab-name" placeholder="New Tab Name">
+    <div id="chat-container">
+        <div id="chat-box"></div>
+        <input type="text" id="chat-input">
+        <button onclick="sendMessage()">Send</button>
+        <div>
+            <input type="text" id="sql-query" placeholder="Enter SQL query">
+            <button onclick="sendQuery()">Run Query</button>
+        </div>
+        <div id="data-display">
+            <!-- Data from the database will be displayed here -->
+        </div>
+        <script>
+            function sendQuery() {
+                const query = document.getElementById('sql-query').value;
+                fetch('/execute-query', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ query: query })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    const display = document.getElementById('data-display');
+                    display.innerHTML = ''; // Clear previous results
+                    data.forEach(row => {
+                        const content = document.createElement('p');
+                        content.textContent = JSON.stringify(row);
+                        display.appendChild(content);
+                    });
+                })
+                .catch(error => console.error('Error running query:', error));
+            }
+        </script>
+    </div>
+
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
