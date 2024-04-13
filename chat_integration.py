@@ -2,6 +2,7 @@ import requests
 import json
 from openai import AzureOpenAI
 
+# from langchain.prompts import PromptTemplate
 from langchain_community.callbacks import get_openai_callback
 from langchain_core.messages import HumanMessage
 from langchain_openai import AzureChatOpenAI
@@ -36,7 +37,7 @@ def send_completion_request( prompt, tables_with_columns = {}):
     print('TABLES')
     print(dict_to_string(tables_with_columns))
 
-    context_structure = 'Please associate each query you generate with provided database structure ' + dict_to_string(tables_with_columns) +'\n ALL DATES ARE IN ISO8601 FORMAT \nRETURN ONLY!!! PROPER SQL QUERY SYNTAX AND NO MORE ADDITIONAL WORDS'
+    context_structure = 'Please associate each query you generate with provided database structure, check if field you use is actually in the table ' + dict_to_string(tables_with_columns) +'\n ALL DATES ARE IN ISO8601 FORMAT \nRETURN ONLY!!! PROPER SQL QUERY SYNTAX AND NO MORE ADDITIONAL WORDS'
 
     prompt = context_str + prompt + context_structure 
 
@@ -67,9 +68,3 @@ def dict_to_string(data):
     return "\n".join(output)  # Join all table information with a newline
 
 
-# Example usage
-nl_query = "Show me all records from employees where age is greater than 30 AND city is equal to Warsaw"
-test_query='What is the color of the sky? Please tell me'
-
-result = send_completion_request(nl_query)
-print(result)

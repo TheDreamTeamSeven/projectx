@@ -134,19 +134,19 @@ function displayDataAsTable(jsonData) {
 }
 
 
-// Initialize database structure
-function initDatabase() {
-    fetch('/init-db-structure')
-        .then(response => response.json())
-        .then(data => {
-            console.log('Database initialized:', data);
-        })
-        .catch(error => console.error('Error initializing database:', error));
-}
+// // Initialize database structure
+// function initDatabase() {
+//     fetch('/init-db-structure')
+//         .then(response => response.json())
+//         .then(data => {
+//             console.log('Database initialized:', data);
+//         })
+//         .catch(error => console.error('Error initializing database:', error));
+// }
 
-document.addEventListener('DOMContentLoaded', function() {
-    initDatabase(); // Automatically initialize the database on page load
-});
+// document.addEventListener('DOMContentLoaded', function() {
+//     initDatabase(); // Automatically initialize the database on page load
+// });
 
 // Listen for Socket.IO responses
 socket.on('response', function(data) {

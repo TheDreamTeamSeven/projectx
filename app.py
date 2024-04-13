@@ -22,11 +22,14 @@ database_name_hackathon = credential.get_secret_value('sql-database-name-hackath
 username = credential.get_secret_value('sql-database-user-name-hackathon')
 password = credential.get_secret_value('sql-database-user-password-hackathon')
 
-driver = '{ODBC Driver 18 for SQL Server}'
+database_name_history = credential.get_secret_value('sql-database-name-history')
+username_history = credential.get_secret_value('sql-database-user-name-history')
+password_history = credential.get_secret_value('sql-database-user-password-history')
+
+driver = credential.get_secret_value('sql-server-driver')
+
 
 fetch_tables_schema_sql = " SELECT TABLE_SCHEMA, TABLE_NAME FROM INFORMATION_SCHEMA.TABLES; "
-fetch_tables_sql = "SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE table_type = 'BASE TABLE';"
-# fetch_columns_table_sql = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '%s' ORDER BY ORDINAL_POSITION;"
 fetch_columns_table_sql = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? ORDER BY ORDINAL_POSITION;"
 
 connection_string = f'DRIVER={driver};SERVER={server};DATABASE={database_name_hackathon};UID={username};PWD={password};Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;'
@@ -96,6 +99,7 @@ def process_query():
         # print(result)
         return jsonify(result)
     except Exception as e:
+        print(jsonify({'error': str(e)}))
         return jsonify({'error': str(e)}), 500
 
 @socketio.on('message')
@@ -109,9 +113,6 @@ def handle_message(data):
     else:
         emit('response', {'tabId': data['tabId'], 'data': 'User: ' + data['data']})
 
-def fetch_tables_schema():
-    ...
-
 def fetch_tables_and_initialize():
     global tables_with_columns
     # Ensure the SQL query is set to fetch both the TABLE_NAME and TABLE_SCHEMA
@@ -120,15 +121,6 @@ def fetch_tables_and_initialize():
     schema_table_pairs = cursor.fetchall()
     tables_with_columns = {f"{row.TABLE_SCHEMA}.{row.TABLE_NAME}": [] for row in schema_table_pairs}
     print("Initialized tables with schema:", tables_with_columns)
-
-# def populate_columns_for_tables():
-#     global tables_with_columns
-#     for table in tables_with_columns.keys():
-#         query = fetch_columns_table_sql % table
-#         cursor.execute(query)
-#         columns = [row[0] for row in cursor.fetchall()]
-#         tables_with_columns[table] = columns
-#     print(tables_with_columns)
 
 def populate_columns_for_tables():
     global tables_with_columns
@@ -153,4 +145,13 @@ def format_data_as_string(data):
     return '\n'.join(str(row) for row in data)
 
 if __name__ == '__main__':
+    try:
+        print('POBIERANIE')
+        fetch_tables_and_initialize()
+        populate_columns_for_tables()
+        print('SUCCESS')
+        # return jsonify({'success': True, 'data': tables_with_columns}), 200
+    except Exception as e:
+        print('ERROR')
+        # return jsonify({'error': str(e)}), 500
     socketio.run(app)
