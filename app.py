@@ -1,5 +1,5 @@
 from chat_integration import send_completion_request
-from history import register_user, login_user
+from history import register_user, login_user, insert_history_prompt, get_last_three_history_prompts
 from flask import Flask, jsonify, render_template, request, session, redirect, url_for
 
 from flask_socketio import SocketIO, send, emit
@@ -38,6 +38,8 @@ fetch_pk_table_sql = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAG
 connection_string = f'DRIVER={driver};SERVER={server};DATABASE={database_name_hackathon};UID={username};PWD={password};Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;'
 
 tables_with_columns = {}
+
+history_prompts = []
 
 # Establish connection
 try:
@@ -85,26 +87,40 @@ def execute_query():
 @app.route('/process-query', methods=['POST'])
 def process_query():
     global tables_with_columns
+    global history_prompts
 
     data = request.get_json()
     nl_query = data.get('query')
+    tab_name = data.get('tab_name', 'default_tab')  # Default tab name if not provided
+    user = session.get('username', 'default_user')  # Default user if not in session
+
     if not nl_query:
         return jsonify({'error': 'No query provided'}), 400
 
+    # Fetch last three history prompts
+    history_prompts = get_last_three_history_prompts(user)
+
+
     try:
-        # Assuming send_completion_request is a function from chat_integration.py that handles the processing
-        # Pass the global table structure along with the query
-        print('TABLES')
-        print(tables_with_columns)
-        result = send_completion_request(nl_query, tables_with_columns)
+        # print('TABLES')
+        # print(tables_with_columns)
+        result = send_completion_request(nl_query, tables_with_columns, history_prompts)
         print('SQL QUERY ')
-        result['content'] = result['content'].replace('\n', ' ')
+        sql_query = result['content'].replace('\n', ' ')
+        result['content'] = sql_query
         print(result['content'])
         query_data = fetch_data_from_db(result['content'])
-        print(query_data)
         result['query_data'] = query_data
-        # print('RESULT')
-        # print(result)
+        # print(result['query_data'])
+
+        success = True if query_data else False  # Assume success if query_data is not empty
+        insert_result = insert_history_prompt(nl_query, sql_query, user, success, tab_name, result['total_cost'])
+        print(f"Inserted into history with result: {insert_result}")
+        # updated_history = get_last_three_history_prompts(user)
+        # result['last_history'] = updated_history
+        # print("Fetched history prompts:", updated_history)  # Debugging line
+
+
         return jsonify(result)
     except Exception as e:
         print(jsonify({'error': str(e)}))
@@ -153,32 +169,31 @@ def logout():
     session.pop('username', None)
     return redirect(url_for('index'))
 
-@app.route('/insert_history', methods=['POST'])
-def handle_insert_history():
-    data = request.json
-    result = insert_history_prompt(data['prompt'], data['sql'], data['user'], data['success'], data['tab_name'])
-    return jsonify({'message': result})
+# @app.route('/insert_history', methods=['POST'])
+# def handle_insert_history():
+#     data = request.json
+#     result = insert_history_prompt(data['prompt'], data['sql'], data['user'], data['success'], data['tab_name'])
+#     return jsonify({'message': result})
 
-@app.route('/get_history', methods=['GET'])
-def handle_get_history():
-    user = request.args.get('user')
-    history_prompts = get_history_prompts(user)
-    return jsonify(history_prompts)
+# @app.route('/get_history', methods=['GET'])
+# def handle_get_history():
+#     user = request.args.get('user')
+#     history_prompts = get_history_prompts(user)
+#     return jsonify(history_prompts)
 
-@socketio.on('message')
-def handle_message(data):
-    global tables_with_columns
+# @socketio.on('message')
+# def handle_message(data):
+#     global tables_with_columns
 
-
-    try:
-        result = send_completion_request(data['data'], tables_with_columns)
-        query_data = fetch_data_from_db(result['content'].replace('\n', ' '))
-        response_text = format_data_as_string(query_data)
-        print(response_text)
-        emit('response', {'tabId': data['tabId'], 'data': 'User: ' + data['data'] +' --- total_cost: ' + result['total_cost'] + '$'})
-    except Exception as e:
-        emit('response', {'tabId': data['tabId'], 'data': 'User: ' + data['data'] +' --- total_cost: ' + result['total_cost'] + '$'})
-    # emit('response', {'tabId': data['tabId'], 'data': 'User: ' + data['data']})
+#     try:
+#         result = send_completion_request(data['data'], tables_with_columns)
+#         query_data = fetch_data_from_db(result['content'].replace('\n', ' '))
+#         response_text = format_data_as_string(query_data)
+#         print(response_text)
+#         emit('response', {'tabId': data['tabId'], 'data': 'User: ' + data['data'] +' --- total_cost: ' + result['total_cost'] + '$'})
+#     except Exception as e:
+#         emit('response', {'tabId': data['tabId'], 'data': 'User: ' + data['data'] +' --- total_cost: ' + result['total_cost'] + '$'})
+#     # emit('response', {'tabId': data['tabId'], 'data': 'User: ' + data['data']})
 
 def fetch_tables_and_initialize():
     global tables_with_columns
@@ -240,4 +255,5 @@ if __name__ == '__main__':
     except Exception as e:
         print('ERROR')
         # return jsonify({'error': str(e)}), 500
-    socketio.run(app)
+    app.run(host='127.0.0.1', port=5000)
+    # socketio.run(app)

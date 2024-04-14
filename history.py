@@ -85,15 +85,15 @@ def login_user(username, password):
 
 # PROMPT HANDLING
 
-def insert_history_prompt(prompt, sql, user, success, tab_name):
+def insert_history_prompt(prompt, sql, user, success, tab_name, total_cost):
     conn = pyodbc.connect(connection_string)
     cursor = conn.cursor()
     try:
         # Prepare the insert statement
         cursor.execute("""
-            INSERT INTO dbo.historyPrompts (Prompt, Sql, Timestamp, [User], Success, TabName)
-            VALUES (?, ?, GETDATE(), ?, ?, ?)
-        """, (prompt, sql, user, success, tab_name))
+            INSERT INTO dbo.historyPrompts (Prompt, Sql, Timestamp, [User], Success, TabName, TotalCost)
+            VALUES (?, ?, GETDATE(), ?, ?, ?, ?)
+        """, (prompt, sql, user, success, tab_name, total_cost))
         conn.commit()
         return "Insert successful"
     except pyodbc.Error as e:
@@ -111,6 +111,21 @@ def get_history_prompts(user):
         return rows  # Return as list of tuples
     except pyodbc.Error as e:
         return f"Error fetching data: {e}"
+    finally:
+        cursor.close()
+        conn.close()
+
+def get_last_three_history_prompts(user):
+    conn = pyodbc.connect(connection_string)
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT TOP 3 Prompt, Sql, TotalCost FROM dbo.historyPrompts
+            WHERE [User] = ? ORDER BY Timestamp DESC
+        """, (user,))
+        return cursor.fetchall()
+    except pyodbc.Error as e:
+        return f"Error fetching history prompts: {e}"
     finally:
         cursor.close()
         conn.close()

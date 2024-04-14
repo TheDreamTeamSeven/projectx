@@ -31,7 +31,7 @@ function sendMessage() {
     var input = document.getElementById('chat-input');
     if (input.value.trim() === '') return; // Prevent empty messages
 
-    socket.emit('message', { tabId: currentTabId, data: input.value });
+    // socket.emit('message', { tabId: currentTabId, data: input.value });
 
     const nlQuery = input.value;
     fetch('/process-query', {
@@ -44,18 +44,13 @@ function sendMessage() {
     .then(response => response.json())
     .then(data => {
         console.log('Query processed:', data);
-        // if (data.error) {
-        //     // console.error('Error:', data.error);
-        //     // document.getElementById('data-display').textContent = 'Error: ' + data.error;
-        //     document.getElementById('sql-query').value = data.content || '';
-        //     displayDataAsTable(data.query_data);
 
-        // } else {
-            // Populate the SQL query input box with the translated SQL query
             document.getElementById('sql-query').value = data.content || '';
             // Display additional data (if any) in the data-display area
             // document.getElementById('data-display').textContent = JSON.stringify(data.query_data, null, 2);
             displayDataAsTable(data.query_data);
+            // displayHistory(data.last_history);
+
         // }
         input.value = ''; // Clear the NL input after processing
     })
@@ -136,20 +131,28 @@ function displayDataAsTable(jsonData) {
     displayArea.appendChild(table);
 }
 
+function displayHistory(historyPrompts) {
+    const historyContainer = document.getElementById('chat-box');  // Ensure this is the correct container
+    historyContainer.innerHTML = '';  // Clear previous content
 
-// // Initialize database structure
-// function initDatabase() {
-//     fetch('/init-db-structure')
-//         .then(response => response.json())
-//         .then(data => {
-//             console.log('Database initialized:', data);
-//         })
-//         .catch(error => console.error('Error initializing database:', error));
-// }
+    if (!Array.isArray(historyPrompts)) {
+        console.error('Expected historyPrompts to be an array, received:', historyPrompts);
+        return;
+    }
 
-// document.addEventListener('DOMContentLoaded', function() {
-//     initDatabase(); // Automatically initialize the database on page load
-// });
+    historyPrompts.forEach(entry => {
+        const promptElement = document.createElement('div');
+        promptElement.innerHTML = `
+            <div class="history-entry">
+                <p><strong>Prompt:</strong> ${entry.Prompt}</p>
+                <p><strong>SQL:</strong> ${entry.Sql}</p>
+                <p><strong>Cost:</strong> $${entry.TotalCost}</p>
+            </div>
+        `;
+        historyContainer.appendChild(promptElement);
+    });
+}
+
 
 // Listen for Socket.IO responses
 socket.on('response', function(data) {

@@ -2,7 +2,7 @@ import requests
 import json
 from openai import AzureOpenAI
 
-from langchain.prompts import ChatPromptTemplate
+from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_community.callbacks import get_openai_callback
 from langchain_core.messages import HumanMessage
 from langchain_openai import AzureChatOpenAI
@@ -31,11 +31,13 @@ def dict_to_string(data):
     return " | ".join(output)  # Using '|' to separate tables for clarity with a newline
 
 
-def send_completion_request(user_input, tables_with_columns={}):
+def send_completion_request(user_input, tables_with_columns={}, history_prompts=[]):
+    history_context = "\n".join(f"Previous SQL: {prompt[1]} for Prompt: {prompt[0]}" for prompt in history_prompts)
+
     chat_template = ChatPromptTemplate.from_messages(
     [
         ("system", f"You are a SQL query developer. Please associate each query you generate with the provided database structure: {dict_to_string(tables_with_columns)}. Check if the field you use is actually in the table. All dates are in ISO8601 format. The answer MUST only contain SQL QUERY. DO NOT SHOW TABLE OR DATABASE NAME IN THE ANSWER OUTSIDE THE SQL QUERY"),
-
+        ("system", f"Previous 3 queries for context {history_context}"),
         ("human", user_input),
     ]
 )
