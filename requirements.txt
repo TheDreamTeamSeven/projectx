@@ -5,3 +5,5 @@ LangChain
 langchain-openai
 pyodbc
 requests
+azure-identity
+azure-keyvault-secrets
