@@ -44,19 +44,19 @@ function sendMessage() {
     .then(response => response.json())
     .then(data => {
         console.log('Query processed:', data);
-        if (data.error) {
-            // console.error('Error:', data.error);
-            // document.getElementById('data-display').textContent = 'Error: ' + data.error;
-            document.getElementById('sql-query').value = data.content || '';
-            displayDataAsTable(data.query_data);
+        // if (data.error) {
+        //     // console.error('Error:', data.error);
+        //     // document.getElementById('data-display').textContent = 'Error: ' + data.error;
+        //     document.getElementById('sql-query').value = data.content || '';
+        //     displayDataAsTable(data.query_data);
 
-        } else {
+        // } else {
             // Populate the SQL query input box with the translated SQL query
             document.getElementById('sql-query').value = data.content || '';
             // Display additional data (if any) in the data-display area
             // document.getElementById('data-display').textContent = JSON.stringify(data.query_data, null, 2);
             displayDataAsTable(data.query_data);
-        }
+        // }
         input.value = ''; // Clear the NL input after processing
     })
     .catch(error => {

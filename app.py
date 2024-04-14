@@ -1,4 +1,5 @@
 from chat_integration import send_completion_request
+from history import register_user, login_user
 from flask import Flask, jsonify, render_template, request, session, redirect, url_for
 
 from flask_socketio import SocketIO, send, emit
@@ -49,9 +50,9 @@ except Exception as e:
 
 @app.route('/')
 def index():
-    # if 'username' in session:   
-    return render_template('index.html')
-    # return redirect(url_for('login'))
+    if 'username' in session:
+        return render_template('index.html', username=session['username'])
+    return redirect(url_for('login'))
 
 @app.route('/init-db-structure')
 def init_db_structure():
@@ -100,6 +101,7 @@ def process_query():
         result['content'] = result['content'].replace('\n', ' ')
         print(result['content'])
         query_data = fetch_data_from_db(result['content'])
+        print(query_data)
         result['query_data'] = query_data
         # print('RESULT')
         # print(result)
@@ -108,23 +110,60 @@ def process_query():
         print(jsonify({'error': str(e)}))
         return jsonify({'error': str(e)}), 500
 
-@app.route('/login', methods=['GET', 'POST'])
+@app.route('/register', methods=['GET'])
+def register():
+    # if request.method == 'POST':
+    #     session['username'] = request.form['username']
+    #     return redirect(url_for('index'))
+    return render_template('register.html')
+
+@app.route('/login', methods=['GET'])
 def login():
-    if request.method == 'POST':
-        session['username'] = request.form['username']
-        return redirect(url_for('index'))
-    return 
-    '''
-        <form method="post">
-            <p><input type=text name=username>
-            <p><input type=submit value=Login>
-        </form>
-    '''
+    # if request.method == 'POST':
+    #     session['username'] = request.form['username']
+    #     return redirect(url_for('index'))
+    return render_template('login.html')
+
+@app.route('/register', methods=['POST'])
+def handle_register():
+    username = request.form['username']
+    password = request.form['password']
+    result = register_user(username, password)
+    if result:
+        # session['username'] = username
+        return redirect(url_for('login'))
+    return jsonify({'message': result})
+
+@app.route('/login', methods=['POST'])
+def handle_login():
+    username = request.form['username']
+    password = request.form['password']
+    result = login_user(username, password)
+    print('LOGIN RESULT')
+    print(result)
+    if result:
+        session['username'] = username
+        return render_template('index.html', username=session['username'])
+    else:
+        return redirect(url_for('login'))
+
 
 @app.route('/logout')
 def logout():
     session.pop('username', None)
     return redirect(url_for('index'))
+
+@app.route('/insert_history', methods=['POST'])
+def handle_insert_history():
+    data = request.json
+    result = insert_history_prompt(data['prompt'], data['sql'], data['user'], data['success'], data['tab_name'])
+    return jsonify({'message': result})
+
+@app.route('/get_history', methods=['GET'])
+def handle_get_history():
+    user = request.args.get('user')
+    history_prompts = get_history_prompts(user)
+    return jsonify(history_prompts)
 
 @socketio.on('message')
 def handle_message(data):

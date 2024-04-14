@@ -7,6 +7,11 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
+    {% if username %}
+    <h1>Welcome, {{ username }}!</h1>
+    <a href="/logout">Logout</a>
+    <br>
+    {% endif %}
     <div id="tabs"></div>
     <button onclick="addTab()">Add Tab</button>
     <input type="text" id="new-tab-name" placeholder="New Tab Name">
