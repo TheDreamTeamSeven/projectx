@@ -9,6 +9,7 @@ COPY azure_connection/ /app/azure_connection/
 COPY static/ /app/static/
 COPY templates/ /app/templates/
 COPY app.py /app/
+COPY history.py /app/
 COPY chat_integration.py /app/
 COPY requirements.txt /app/
 COPY set_up_driver.sh /usr/local/bin/
