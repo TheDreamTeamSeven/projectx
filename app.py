@@ -255,5 +255,5 @@ if __name__ == '__main__':
     except Exception as e:
         print('ERROR')
         # return jsonify({'error': str(e)}), 500
-    app.run(host='127.0.0.1', port=5000)
+    app.run(host='10.0.0.4', port=5000)
     # socketio.run(app)
