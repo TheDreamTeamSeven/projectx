@@ -27,10 +27,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 
 # Grant execute permissions to the script
-RUN chmod +x /usr/local/bin/install_driver.sh
+RUN chmod +x /usr/local/bin/set_up_driver.sh
 
 # Run the script to install the driver
-RUN /usr/local/bin/install_driver.sh
+RUN /usr/local/bin/set_up_driver.sh
 
 # Ekspozycja portu 5000 (domyślny port Flask)
 EXPOSE 5000
