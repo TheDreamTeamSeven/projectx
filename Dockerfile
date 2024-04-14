@@ -22,6 +22,7 @@ RUN apt-get install -y python3 python3-pip
 RUN apt-get update && \
     apt-get install -y python3 python3-pip gnupg2 curl apt-transport-https unixodbc unixodbc-dev
 
+RUN apt-get update && apt-get install -y lsb-release && apt-get clean all
 
 RUN pip install --no-cache-dir -r requirements.txt
 
@@ -30,7 +31,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN chmod +x /usr/local/bin/set_up_driver.sh
 
 # Run the script to install the driver
-RUN /usr/local/bin/set_up_driver.sh
+RUN  /usr/local/bin/set_up_driver.sh
 
 # Ekspozycja portu 5000 (domyślny port Flask)
 EXPOSE 5000
