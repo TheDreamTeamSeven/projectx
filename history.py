@@ -119,13 +119,33 @@ def get_last_three_history_prompts(user):
     conn = pyodbc.connect(connection_string)
     cursor = conn.cursor()
     try:
+        print('TEST HISTORY')
         cursor.execute("""
             SELECT TOP 3 Prompt, Sql, TotalCost FROM dbo.historyPrompts
             WHERE [User] = ? ORDER BY Timestamp DESC
         """, (user,))
-        return cursor.fetchall()
+        rows = cursor.fetchall()
+        rows = transform_history_prompts(rows)
+        print('HISTORY OK')
+        return rows
     except pyodbc.Error as e:
         return f"Error fetching history prompts: {e}"
     finally:
         cursor.close()
         conn.close()
+
+
+def transform_history_prompts(prompt_tuples):
+    result = []
+    for prompt in prompt_tuples:
+        # Unpack each tuple into its components
+        description, sql_query, total_cost = prompt
+        # Create a dictionary with descriptive keys
+        prompt_dict = {
+            'description': description,
+            'sql_query': sql_query,
+            'total_cost': total_cost
+        }
+        # Append the dictionary to the result list
+        result.append(prompt_dict)
+    return result

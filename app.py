@@ -99,10 +99,10 @@ def process_query():
 
     # Fetch last three history prompts
     history_prompts = get_last_three_history_prompts(user)
-
+    print(history_prompts)
 
     try:
-        # print('TABLES')
+        print('TABLES')
         # print(tables_with_columns)
         result = send_completion_request(nl_query, tables_with_columns, history_prompts)
         print('SQL QUERY ')
@@ -110,16 +110,15 @@ def process_query():
         result['content'] = sql_query
         print(result['content'])
         query_data = fetch_data_from_db(result['content'])
+        print('DATA LEN')
         result['query_data'] = query_data
-        # print(result['query_data'])
+        print(len(result['query_data']))
 
         success = True if query_data else False  # Assume success if query_data is not empty
         insert_result = insert_history_prompt(nl_query, sql_query, user, success, tab_name, result['total_cost'])
         print(f"Inserted into history with result: {insert_result}")
-        # updated_history = get_last_three_history_prompts(user)
-        # result['last_history'] = updated_history
-        # print("Fetched history prompts:", updated_history)  # Debugging line
-
+        updated_history = get_last_three_history_prompts(user)
+        result['last_history'] = updated_history
 
         return jsonify(result)
     except Exception as e:
@@ -168,32 +167,6 @@ def handle_login():
 def logout():
     session.pop('username', None)
     return redirect(url_for('index'))
-
-# @app.route('/insert_history', methods=['POST'])
-# def handle_insert_history():
-#     data = request.json
-#     result = insert_history_prompt(data['prompt'], data['sql'], data['user'], data['success'], data['tab_name'])
-#     return jsonify({'message': result})
-
-# @app.route('/get_history', methods=['GET'])
-# def handle_get_history():
-#     user = request.args.get('user')
-#     history_prompts = get_history_prompts(user)
-#     return jsonify(history_prompts)
-
-# @socketio.on('message')
-# def handle_message(data):
-#     global tables_with_columns
-
-#     try:
-#         result = send_completion_request(data['data'], tables_with_columns)
-#         query_data = fetch_data_from_db(result['content'].replace('\n', ' '))
-#         response_text = format_data_as_string(query_data)
-#         print(response_text)
-#         emit('response', {'tabId': data['tabId'], 'data': 'User: ' + data['data'] +' --- total_cost: ' + result['total_cost'] + '$'})
-#     except Exception as e:
-#         emit('response', {'tabId': data['tabId'], 'data': 'User: ' + data['data'] +' --- total_cost: ' + result['total_cost'] + '$'})
-#     # emit('response', {'tabId': data['tabId'], 'data': 'User: ' + data['data']})
 
 def fetch_tables_and_initialize():
     global tables_with_columns
@@ -255,5 +228,5 @@ if __name__ == '__main__':
     except Exception as e:
         print('ERROR')
         # return jsonify({'error': str(e)}), 500
-    app.run(host='10.0.0.4', port=5000)
+    app.run(host='127.0.0.1', port=5000)
     # socketio.run(app)

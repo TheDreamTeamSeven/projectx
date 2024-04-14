@@ -49,7 +49,8 @@ function sendMessage() {
             // Display additional data (if any) in the data-display area
             // document.getElementById('data-display').textContent = JSON.stringify(data.query_data, null, 2);
             displayDataAsTable(data.query_data);
-            // displayHistory(data.last_history);
+            // console.log(data.last_history);
+            displayHistory(data.last_history);
 
         // }
         input.value = ''; // Clear the NL input after processing
@@ -106,6 +107,10 @@ function displayDataAsTable(jsonData) {
     // Create the header row
     const thead = document.createElement('thead');
     const headerRow = document.createElement('tr');
+    console.log('JSONDATA ',jsonData);
+    if (jsonData === null){
+        return;
+    }
     Object.keys(jsonData[0]).forEach(key => {
         const headerCell = document.createElement('th');
         headerCell.textContent = key;
@@ -131,7 +136,7 @@ function displayDataAsTable(jsonData) {
     displayArea.appendChild(table);
 }
 
-function displayHistory(historyPrompts) {
+function displayHistory(historyPrompts=[]) {
     const historyContainer = document.getElementById('chat-box');  // Ensure this is the correct container
     historyContainer.innerHTML = '';  // Clear previous content
 
@@ -140,13 +145,15 @@ function displayHistory(historyPrompts) {
         return;
     }
 
+    console.log('TEST HISTORY ', historyPrompts)
+
     historyPrompts.forEach(entry => {
+        
         const promptElement = document.createElement('div');
+        promptElement.className = "history-entry";  // Added class for styling purposes
         promptElement.innerHTML = `
-            <div class="history-entry">
-                <p><strong>Prompt:</strong> ${entry.Prompt}</p>
-                <p><strong>SQL:</strong> ${entry.Sql}</p>
-                <p><strong>Cost:</strong> $${entry.TotalCost}</p>
+            <div>
+                <strong>Prompt:</strong> ${entry.description} - <strong>SQL:</strong> ${entry.sql_query} - <strong>Cost:</strong> $${parseFloat(entry.total_cost).toFixed(6)}
             </div>
         `;
         historyContainer.appendChild(promptElement);
