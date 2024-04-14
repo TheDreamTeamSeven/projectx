@@ -1,5 +1,6 @@
 from chat_integration import send_completion_request
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, session, redirect, url_for
+
 from flask_socketio import SocketIO, send, emit
 
 from azure_connection.utils import AzureCredential
@@ -31,6 +32,7 @@ driver = credential.get_secret_value('sql-server-driver')
 
 fetch_tables_schema_sql = " SELECT TABLE_SCHEMA, TABLE_NAME FROM INFORMATION_SCHEMA.TABLES; "
 fetch_columns_table_sql = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? ORDER BY ORDINAL_POSITION;"
+fetch_pk_table_sql = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND CONSTRAINT_NAME LIKE 'PK%'"
 
 connection_string = f'DRIVER={driver};SERVER={server};DATABASE={database_name_hackathon};UID={username};PWD={password};Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;'
 
@@ -42,12 +44,14 @@ try:
     cursor = cnxn.cursor()
     print("Connection successful")
 except Exception as e:
-    print("Error connecting to SQL Server:", e)
+    print("Error connecting to SQL Server: ", e)
 
 
 @app.route('/')
 def index():
+    # if 'username' in session:   
     return render_template('index.html')
+    # return redirect(url_for('login'))
 
 @app.route('/init-db-structure')
 def init_db_structure():
@@ -55,10 +59,11 @@ def init_db_structure():
         print('POBIERANIE')
         fetch_tables_and_initialize()
         populate_columns_for_tables()
+        populate_primary_keys_for_tables()  # Add this line
         print('SUCCESS')
         return jsonify({'success': True, 'data': tables_with_columns}), 200
     except Exception as e:
-        print('ERROR')
+        print('ERROR FETCHING DATABASE STRUCTURE')
         return jsonify({'error': str(e)}), 500
 
 @app.route('/get-data')
@@ -96,23 +101,45 @@ def process_query():
         print(result['content'])
         query_data = fetch_data_from_db(result['content'])
         result['query_data'] = query_data
-        print('RESULT')
-        print(result)
+        # print('RESULT')
+        # print(result)
         return jsonify(result)
     except Exception as e:
         print(jsonify({'error': str(e)}))
         return jsonify({'error': str(e)}), 500
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        session['username'] = request.form['username']
+        return redirect(url_for('index'))
+    return 
+    '''
+        <form method="post">
+            <p><input type=text name=username>
+            <p><input type=submit value=Login>
+        </form>
+    '''
+
+@app.route('/logout')
+def logout():
+    session.pop('username', None)
+    return redirect(url_for('index'))
+
 @socketio.on('message')
 def handle_message(data):
-    print('Received message: ' + data['data'] + ' on tab ' + str(data['tabId']))
-    if data['data'].startswith('/query'):
-        # Handle command to fetch data from the database
-        query_data = fetch_data_from_db()
+    global tables_with_columns
+
+
+    try:
+        result = send_completion_request(data['data'], tables_with_columns)
+        query_data = fetch_data_from_db(result['content'].replace('\n', ' '))
         response_text = format_data_as_string(query_data)
-        emit('response', {'tabId': data['tabId'], 'data': response_text})
-    else:
-        emit('response', {'tabId': data['tabId'], 'data': 'User: ' + data['data']})
+        print(response_text)
+        emit('response', {'tabId': data['tabId'], 'data': 'User: ' + data['data'] +' --- total_cost: ' + result['total_cost'] + '$'})
+    except Exception as e:
+        emit('response', {'tabId': data['tabId'], 'data': 'User: ' + data['data'] +' --- total_cost: ' + result['total_cost'] + '$'})
+    # emit('response', {'tabId': data['tabId'], 'data': 'User: ' + data['data']})
 
 def fetch_tables_and_initialize():
     global tables_with_columns
@@ -121,7 +148,7 @@ def fetch_tables_and_initialize():
     # Fetch all rows and create dictionary keys as "schema.table"
     schema_table_pairs = cursor.fetchall()
     tables_with_columns = {f"{row.TABLE_SCHEMA}.{row.TABLE_NAME}": [] for row in schema_table_pairs}
-    print("Initialized tables with schema:", tables_with_columns)
+    # print("Initialized tables with schema:", tables_with_columns)
 
 def populate_columns_for_tables():
     global tables_with_columns
@@ -131,7 +158,23 @@ def populate_columns_for_tables():
         cursor.execute(fetch_columns_table_sql, (schema, table))
         columns = [row[0] for row in cursor.fetchall()]
         tables_with_columns[full_table_name] = columns
-    print("Populated tables with columns:", tables_with_columns)
+    # print("Populated tables with columns:", tables_with_columns)
+
+def populate_primary_keys_for_tables():
+    global tables_with_columns
+    for full_table_name in tables_with_columns.keys():
+        schema, table = full_table_name.split('.')
+        # Prepare the SQL query to fetch primary key columns
+        cursor.execute(fetch_pk_table_sql, (schema, table))
+        primary_keys = [row.COLUMN_NAME for row in cursor.fetchall()]
+
+        # Update the dictionary to include both columns and primary keys
+        # Ensure columns are already populated
+        if full_table_name in tables_with_columns:
+            tables_with_columns[full_table_name] = {
+                "columns": tables_with_columns[full_table_name],
+                "primary_keys": primary_keys
+            }
 
 def fetch_data_from_db(query_str='SELECT TOP 5 * FROM SalesLT.Customer;'):
     cursor.execute(query_str)
@@ -140,6 +183,7 @@ def fetch_data_from_db(query_str='SELECT TOP 5 * FROM SalesLT.Customer;'):
     for row in cursor.fetchall():
         results.append(dict(zip(columns, row)))
     return results
+    
 
 def format_data_as_string(data):
     # Convert the query result to a string format suitable for display
@@ -150,6 +194,8 @@ if __name__ == '__main__':
         print('POBIERANIE')
         fetch_tables_and_initialize()
         populate_columns_for_tables()
+        populate_primary_keys_for_tables()  # Add this line
+        print(tables_with_columns)
         print('SUCCESS')
         # return jsonify({'success': True, 'data': tables_with_columns}), 200
     except Exception as e:

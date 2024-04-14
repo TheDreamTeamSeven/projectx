@@ -45,8 +45,11 @@ function sendMessage() {
     .then(data => {
         console.log('Query processed:', data);
         if (data.error) {
-            console.error('Error:', data.error);
-            document.getElementById('data-display').textContent = 'Error: ' + data.error;
+            // console.error('Error:', data.error);
+            // document.getElementById('data-display').textContent = 'Error: ' + data.error;
+            document.getElementById('sql-query').value = data.content || '';
+            displayDataAsTable(data.query_data);
+
         } else {
             // Populate the SQL query input box with the translated SQL query
             document.getElementById('sql-query').value = data.content || '';
@@ -93,7 +96,7 @@ function displayDataAsTable(jsonData) {
     const displayArea = document.getElementById('data-display');
     displayArea.innerHTML = '';  // Clear previous contents
 
-    if (jsonData.length === 0) {
+    if (!jsonData) {
         displayArea.innerHTML = '<p>No data to display.</p>';
         return;
     }
