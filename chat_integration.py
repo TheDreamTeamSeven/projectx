@@ -34,7 +34,7 @@ def dict_to_string(data):
 def send_completion_request(user_input, tables_with_columns={}):
     chat_template = ChatPromptTemplate.from_messages(
     [
-        ("system", f"You are a SQL query developer. Please associate each query you generate with the provided database structure: {dict_to_string(tables_with_columns)}. Check if the field you use is actually in the table. All dates are in ISO8601 format. Return only proper SQL query syntax and no more additional words."),
+        ("system", f"You are a SQL query developer. Please associate each query you generate with the provided database structure: {dict_to_string(tables_with_columns)}. Check if the field you use is actually in the table. All dates are in ISO8601 format. The answer MUST only contain SQL QUERY. DO NOT SHOW TABLE OR DATABASE NAME IN THE ANSWER OUTSIDE THE SQL QUERY"),
 
         ("human", user_input),
     ]
@@ -43,8 +43,7 @@ def send_completion_request(user_input, tables_with_columns={}):
 
     with get_openai_callback() as cb:
         full_response = client(chat_template.format_prompt( text=user_input).to_messages())
-        # print(full_response)
-        # full_response = client([message])
+
         print(f"Total Cost (USD): ${format(cb.total_cost, '.6f')}")
 
     return {
@@ -53,13 +52,13 @@ def send_completion_request(user_input, tables_with_columns={}):
     }
 
 # Example usage
-user_input = "Find all employees who were hired after 2020."
-tables_with_columns = {
-    "employees": ["id", "name", "hire_date"],
-    "departments": ["id", "department_name"]
-}
-response = send_completion_request(user_input, tables_with_columns)
-print(response["content"])
+# user_input = "Find all employees who were hired after 2020."
+# tables_with_columns = {
+#     "employees": ["id", "name", "hire_date"],
+#     "departments": ["id", "department_name"]
+# }
+# response = send_completion_request(user_input, tables_with_columns)
+# print(response["content"])
 
 
 
