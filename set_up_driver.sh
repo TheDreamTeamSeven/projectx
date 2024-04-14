@@ -17,4 +17,4 @@ ACCEPT_EULA=Y apt-get install -y mssql-tools18
 echo 'export PATH="$PATH:/opt/mssql-tools18/bin"' >> ~/.bashrc
 source ~/.bashrc
 # optional: for unixODBC development headers
-apt-get install -y unixodbc-dev
+sudo apt-get install -y unixodbc-dev
