@@ -96,7 +96,8 @@ def process_query():
         print(result['content'])
         query_data = fetch_data_from_db(result['content'])
         result['query_data'] = query_data
-        # print(result)
+        print('RESULT')
+        print(result)
         return jsonify(result)
     except Exception as e:
         print(jsonify({'error': str(e)}))

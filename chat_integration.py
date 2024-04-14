@@ -2,7 +2,7 @@ import requests
 import json
 from openai import AzureOpenAI
 
-# from langchain.prompts import PromptTemplate
+from langchain.prompts import ChatPromptTemplate
 from langchain_community.callbacks import get_openai_callback
 from langchain_core.messages import HumanMessage
 from langchain_openai import AzureChatOpenAI
@@ -22,49 +22,46 @@ client = AzureChatOpenAI(
     deployment_name='testChatIntegration'
 )
 
-context_str = 'You are a SQL query developer. Please create a proper SQL query for the description as given below:\n'
-
-def send_completion_request( prompt, tables_with_columns = {}):
-    """
-    Sends a completion job to the OpenAI API and prints the response.
-
-    Returns:
-    str: The original prompt concatenated with the generated response.
-    """
-    print('Sending a test completion job')
-
-    print(prompt)
-    print('TABLES')
-    print(dict_to_string(tables_with_columns))
-
-    context_structure = 'Please associate each query you generate with provided database structure, check if field you use is actually in the table ' + dict_to_string(tables_with_columns) +'\n ALL DATES ARE IN ISO8601 FORMAT \nRETURN ONLY!!! PROPER SQL QUERY SYNTAX AND NO MORE ADDITIONAL WORDS'
-
-    prompt = context_str + prompt + context_structure 
-
-    message = HumanMessage(
-        model='testChatIntegration',
-        content=prompt
-    )
-
-    with get_openai_callback() as cb:
-        full_response = client([message])
-        full_response.total_cost = format(cb.total_cost, '.6f')
-        print(
-        f"Total Cost (USD): ${format(cb.total_cost, '.6f')}"
-    )  
-
-    return {
-        "content": full_response.content,  # or whatever the attribute for the response text is
-        "total_cost": full_response.total_cost
-    }
-    # return full_response
-
 def dict_to_string(data):
     output = []
     for table, columns in data.items():
-        columns_str = ", ".join(columns)  # Join all column names with a comma and a space
-        table_info = f"Table: {table}\nColumns: {columns_str}\n"
+        columns_str = ", ".join(columns)
+        table_info = f"Table: {table}, Columns: {columns_str}"
         output.append(table_info)
-    return "\n".join(output)  # Join all table information with a newline
+    return " | ".join(output)  # Using '|' to separate tables for clarity with a newline
+
+
+def send_completion_request(user_input, tables_with_columns={}):
+    chat_template = ChatPromptTemplate.from_messages(
+    [
+        ("system", f"You are a SQL query developer. Please associate each query you generate with the provided database structure: {dict_to_string(tables_with_columns)}. Check if the field you use is actually in the table. All dates are in ISO8601 format. Return only proper SQL query syntax and no more additional words."),
+
+        ("human", user_input),
+    ]
+)
+    print(chat_template)
+
+    with get_openai_callback() as cb:
+        full_response = client(chat_template.format_prompt( text=user_input).to_messages())
+        # print(full_response)
+        # full_response = client([message])
+        print(f"Total Cost (USD): ${format(cb.total_cost, '.6f')}")
+
+    return {
+        "content": full_response.content,  # Adjust this based on actual attribute
+        "total_cost": format(cb.total_cost, '.6f')
+    }
+
+# Example usage
+user_input = "Find all employees who were hired after 2020."
+tables_with_columns = {
+    "employees": ["id", "name", "hire_date"],
+    "departments": ["id", "department_name"]
+}
+response = send_completion_request(user_input, tables_with_columns)
+print(response["content"])
+
+
+
 
 
