@@ -37,7 +37,7 @@ def send_completion_request(user_input, tables_with_columns={}, history_prompts=
     chat_template = ChatPromptTemplate.from_messages(
     [
         ("system", f"You are a SQL query developer. Please associate each query you generate with the provided database structure: {dict_to_string(tables_with_columns)}. Check if the field you use is actually in the table. All dates are in ISO8601 format. The answer MUST only contain SQL QUERY. DO NOT SHOW TABLE OR DATABASE NAME IN THE ANSWER OUTSIDE THE SQL QUERY"),
-        ("system", f"Previous 3 queries for context {history_context}"),
+        # ("system", f"Previous 3 queries for context {history_context}"),
         ("human", user_input),
     ]
 )
